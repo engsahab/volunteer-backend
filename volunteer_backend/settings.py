@@ -53,6 +53,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',  # The default port for React (Vite)
+    'http://127.0.0.1:5173',
+]
+
+
 ROOT_URLCONF = 'volunteer_backend.urls'
 
 TEMPLATES = [
