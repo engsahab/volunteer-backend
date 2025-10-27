@@ -78,11 +78,11 @@ WSGI_APPLICATION = 'volunteer_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',     # <-- اسم قاعدة البيانات التي أنشأتها في pgAdmin
-        'USER': 'sahab',         # <-- اسم المستخدم لـ PostgreSQL
-        'PASSWORD': 'ss113355', # <-- كلمة المرور لـ PostgreSQL
+        'NAME': 'volunteer_db',     
+        'USER': 'sahab',         
+        'PASSWORD': 'ss113355', 
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '5433',
     }
 }
 
