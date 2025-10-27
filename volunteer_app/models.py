@@ -11,3 +11,25 @@ class Opportunity(models.Model):
 
     def __str__(self):
         return self.title
+
+      
+
+class Application(models.Model):
+   
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+    ]
+
+    opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE, related_name='applications')
+    
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    applied_at = models.DateTimeField(auto_now_add=True) 
+
+    def __str__(self):
+        return f"Application for {self.opportunity.title}"
+
+    class Meta:
+        
+        ordering = ['-applied_at']
