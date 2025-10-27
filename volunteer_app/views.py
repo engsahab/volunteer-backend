@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 
-from .models import Opportunity
-from .serializers import OpportunitySerializer
+from .models import Opportunity,Application
+from .serializers import OpportunitySerializer,ApplicationSerializer
 # Create your views here.
 
 class Home(APIView):
@@ -80,3 +80,13 @@ class OpportunityDetail(APIView):
             return Response(
                 {"error": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+
+class OpportunityApplicationList(APIView):
+
+       def  get(self, request, opportunity_id):
+       
+            queryset = Application.objects.filter(opportunity_id=opportunity_id)
+            serializer = ApplicationSerializer(queryset, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)  
