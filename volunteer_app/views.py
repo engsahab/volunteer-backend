@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 
-from .models import Opportunity,Application
-from .serializers import OpportunitySerializer,ApplicationSerializer
+from .models import Opportunity,Application,Skill
+from .serializers import OpportunitySerializer,ApplicationSerializer,SkillSerializer
 # Create your views here.
 
 class Home(APIView):
@@ -83,10 +83,35 @@ class OpportunityDetail(APIView):
         
 
 class OpportunityApplicationList(APIView):
-
        def  get(self, request, opportunity_id):
        
             queryset = Application.objects.filter(opportunity_id=opportunity_id)
             serializer = ApplicationSerializer(queryset, many=True)
 
             return Response(serializer.data, status=status.HTTP_200_OK)  
+       
+
+      
+class SkillList(APIView):
+       def post(self, request):
+        serializer = SkillSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AssociateSkillToOpp(APIView):
+       def patch(self, request, opportunity_id, skill_id):
+        opportunity = get_object_or_404(Opportunity, id=opportunity_id)
+        skill = get_object_or_404(Skill, id=skill_id)
+        opportunity.skills.add(skill)
+        return Response({"message": f"Skill {skill.name} added to {opportunity.title}"}, status=status.HTTP_200_OK)
+
+
+class DesociateSkillFromOpp(APIView):
+    def post(self, request, opportunity_id, skill_id): 
+        opportunity = get_object_or_404(Opportunity, id=opportunity_id)
+        skill = get_object_or_404(Skill, id=skill_id)
+        opportunity.skills.remove(skill)
+        return Response({"message": f"Skill {skill.name} removed from {opportunity.title}"}, status=status.HTTP_200_OK)
