@@ -49,8 +49,16 @@ class OpportunityDetail(APIView):
         try:
             queryset = get_object_or_404(Opportunity, id=opportunity_id)
             serializer = OpportunitySerializer(queryset)
-            return Response(serializer.data)
+            skills_opportunity_has = queryset.skills.all() 
+            skills_opportunity_does_not_have = Skill.objects.exclude(
+                id__in=skills_opportunity_has.values_list('id')
+            )
+            data = serializer.data
+            data['skills_opportunity_has'] = SkillSerializer(skills_opportunity_has, many=True).data
+            data['skills_opportunity_does_not_have'] = SkillSerializer(skills_opportunity_does_not_have, many=True).data
+            return Response(data)
 
+        
         except Exception as error:
             return Response(
                 {"error": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
