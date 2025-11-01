@@ -3,7 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from rest_framework.permissions import AllowAny,IsAuthenticated
+
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
+
 from .models import Opportunity,Application,Skill,VolunteerProfile
 from .serializers import OpportunitySerializer,ApplicationSerializer,SkillSerializer,VolunteerProfileSerializer
 # Create your views here.
@@ -12,6 +14,9 @@ from .serializers import OpportunitySerializer,ApplicationSerializer,SkillSerial
 User = get_user_model()
 
 class Home(APIView):
+
+    permission_classes = [AllowAny] 
+    
     def get(self, request):
         content = {'message': 'Welcome to the Volunteer Management API!'}
         return Response(content)
@@ -28,12 +33,17 @@ class Home(APIView):
 
 
 class OpportunityList(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
         queryset = Opportunity.objects.all()
         serializer = OpportunitySerializer(queryset, many=True)
         return Response(serializer.data)
 
     def post(self, request):
+
+        if not request.user.is_staff: 
+            return Response({"error": "Only admins can create opportunities."}, status=status.HTTP_403_FORBIDDEN)
         try:
             serializer = OpportunitySerializer(data=request.data)
             if serializer.is_valid():
@@ -49,6 +59,9 @@ class OpportunityList(APIView):
 
 
 class OpportunityDetail(APIView):
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request, opportunity_id):
         try:
             queryset = get_object_or_404(Opportunity, id=opportunity_id)
@@ -61,7 +74,6 @@ class OpportunityDetail(APIView):
             data['skills_opportunity_has'] = SkillSerializer(skills_opportunity_has, many=True).data
             data['skills_opportunity_does_not_have'] = SkillSerializer(skills_opportunity_does_not_have, many=True).data
             return Response(data)
-
         
         except Exception as error:
             return Response(
@@ -69,6 +81,9 @@ class OpportunityDetail(APIView):
             )
 
     def put(self, request, opportunity_id):
+
+        if not request.user.is_staff:
+            return Response({"error": "Only admins can edit opportunities."}, status=status.HTTP_403_FORBIDDEN)
         try:
             queryset = get_object_or_404(Opportunity, id=opportunity_id)
             serializer = OpportunitySerializer(queryset, data=request.data)
@@ -83,6 +98,9 @@ class OpportunityDetail(APIView):
             )
 
     def delete(self, request, opportunity_id):
+       
+        if not request.user.is_staff:
+            return Response({"error": "Only admins can delete opportunities."}, status=status.HTTP_403_FORBIDDEN)
         try:
             queryset = get_object_or_404(Opportunity, id=opportunity_id)
             queryset.delete()
@@ -94,17 +112,100 @@ class OpportunityDetail(APIView):
             )
         
 
+
 class OpportunityApplicationList(APIView):
+
+       permission_classes = [IsAuthenticatedOrReadOnly]
+
        def  get(self, request, opportunity_id):
-       
             queryset = Application.objects.filter(opportunity_id=opportunity_id)
             serializer = ApplicationSerializer(queryset, many=True)
-
             return Response(serializer.data, status=status.HTTP_200_OK)  
        
+       def post(self, request, opportunity_id):
 
-      
+            try:
+
+                profile = request.user.profile 
+                
+                serializer = ApplicationSerializer(data=request.data)
+                
+                if serializer.is_valid():
+
+                    serializer.save(profile=profile, opportunity_id=opportunity_id) 
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            except Exception as error:
+                return Response(
+                    {"error": "An error occurred submitting the application."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+
+
+class ApplicationDetail(APIView):
+   
+    permission_classes = [IsAuthenticated]
+    def get(self, request, app_id):
+        
+        application = get_object_or_404(Application, id=app_id)
+        
+       
+        if not (request.user.profile == application.profile or request.user.is_staff):
+            return Response({"error": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        serializer = ApplicationSerializer(application)
+        return Response(serializer.data)
+
+
+    def put(self, request, app_id):
+         
+        if not request.user.is_staff:
+            return Response({"error": "Only admins can change status."}, status=status.HTTP_403_FORBIDDEN)
+            
+        application = get_object_or_404(Application, id=app_id)
+        
+       
+        serializer = ApplicationSerializer(application, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, app_id):
+       
+        application = get_object_or_404(Application, id=app_id)
+        
+        
+        if not request.user.profile == application.profile:
+             return Response({"error": "You can only delete your own applications."}, status=status.HTTP_403_FORBIDDEN)
+        
+        application.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+class AdminApplicationList(APIView):
+    
+    permission_classes = [IsAdminUser] 
+
+    def get(self, request):
+       
+        applications = Application.objects.all().order_by('-applied_at')
+        
+        serializer = ApplicationSerializer(applications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class SkillList(APIView):
+       permission_classes = [IsAdminUser]
+       
+       def get(self, request):
+            skills = Skill.objects.all()
+            serializer = SkillSerializer(skills, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+
        def post(self, request):
         serializer = SkillSerializer(data=request.data)
         if serializer.is_valid():
@@ -112,8 +213,30 @@ class SkillList(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class SkillDetail(APIView):
+    permission_classes = [IsAdminUser] 
+
+    def get(self, request, skill_id):
+        skill = get_object_or_404(Skill, id=skill_id)
+        serializer = SkillSerializer(skill)
+        return Response(serializer.data)
+
+    def put(self, request, skill_id):
+        skill = get_object_or_404(Skill, id=skill_id)
+        serializer = SkillSerializer(skill, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, skill_id):
+        skill = get_object_or_404(Skill, id=skill_id)
+        skill.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class AssociateSkillToOpp(APIView):
+       permission_classes = [IsAdminUser]
+       
        def patch(self, request, opportunity_id, skill_id):
         opportunity = get_object_or_404(Opportunity, id=opportunity_id)
         skill = get_object_or_404(Skill, id=skill_id)
@@ -122,12 +245,16 @@ class AssociateSkillToOpp(APIView):
 
 
 class DesociateSkillFromOpp(APIView):
+    permission_classes = [IsAdminUser]
+
     def post(self, request, opportunity_id, skill_id): 
         opportunity = get_object_or_404(Opportunity, id=opportunity_id)
         skill = get_object_or_404(Skill, id=skill_id)
         opportunity.skills.remove(skill)
         return Response({"message": f"Skill {skill.name} removed from {opportunity.title}"}, status=status.HTTP_200_OK)
-   
+
+
+ 
 class SignupUserView(APIView):
     permission_classes = [AllowAny] 
 
@@ -151,7 +278,6 @@ class SignupUserView(APIView):
         user = User.objects.create_user(
             username=username, email=email, password=password
         )
-
     
         VolunteerProfile.objects.create(user=user)
        
@@ -159,3 +285,41 @@ class SignupUserView(APIView):
             {"id": user.id, "username": user.username, "email": user.email},
             status=status.HTTP_201_CREATED,
         )
+
+
+class GetUserProfileView(APIView):
+
+    permission_classes = [IsAuthenticated] 
+
+    def get(self, request):
+        
+       def get(self, request):
+        
+        user = request.user
+        try:
+            profile = VolunteerProfile.objects.get(user=user)
+        except VolunteerProfile.DoesNotExist:
+            profile = VolunteerProfile.objects.create(user=user)
+       
+        
+        serializer = VolunteerProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    
+    def put(self, request):
+        
+        try:
+            profile = get_object_or_404(VolunteerProfile, user=request.user)
+
+
+            serializer = VolunteerProfileSerializer(profile, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as error:
+             return Response({"error": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
