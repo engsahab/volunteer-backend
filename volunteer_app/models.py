@@ -5,17 +5,20 @@ User = get_user_model()
 # Create your models here.
 
 
-class VolunteerProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    skills = models.ManyToManyField('Skill', blank=True) 
-    city = models.CharField(max_length=100, blank=True, null=True)
-
-    def __str__(self):
-        return self.user.username
-
 
 class Skill(models.Model):
     name = models.CharField(max_length=100)
+
+
+class VolunteerProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    skills = models.ManyToManyField(Skill, blank=True) 
+    city = models.CharField(max_length=100, blank=True, null=True)
+    specialization = models.CharField(max_length=200, blank=True, null=True)
+    
+    def __str__(self):
+        return self.user.username
+
 
 class Opportunity(models.Model):
     title = models.CharField(max_length=200)
@@ -42,13 +45,14 @@ class Application(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     applied_at = models.DateTimeField(auto_now_add=True) 
 
-def __str__(self):
+   
+    def __str__(self):
         
         if self.profile and self.profile.user:
             return f"Application by {self.profile.user.username} for {self.opportunity.title}"
         else:
             return f"Application (No Profile) for {self.opportunity.title}"
         
-class Meta:
-        
+    class Meta:
+            
         ordering = ['-applied_at']
