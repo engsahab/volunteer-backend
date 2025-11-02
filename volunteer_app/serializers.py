@@ -23,7 +23,6 @@ class VolunteerProfileSerializer(serializers.ModelSerializer):
 class ApplicationSerializer(serializers.ModelSerializer):
     profile = VolunteerProfileSerializer(read_only=True)
     
-    
     class Meta:
        model = Application
        
@@ -34,7 +33,6 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
 class OpportunitySerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True, read_only=True)
-
     applications = ApplicationSerializer(many=True, read_only=True) 
 
     class Meta:
@@ -42,9 +40,12 @@ class OpportunitySerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'date', 'location', 'skills', 'applications']
 
 class ApplicationSerializer(serializers.ModelSerializer):
-    profile = VolunteerProfileSerializer(read_only=True)
+    profile = VolunteerProfileSerializer(read_only=True) 
     opportunity = OpportunitySerializer(read_only=True) 
+
     class Meta:
        model = Application
+
        fields = ['id', 'opportunity', 'status', 'applied_at', 'profile']
        read_only_fields = ['opportunity', 'profile']
+
