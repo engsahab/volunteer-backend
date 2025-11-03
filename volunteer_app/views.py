@@ -6,8 +6,8 @@ from django.contrib.auth import get_user_model
 
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
 
-from .models import Opportunity,Application,Skill,VolunteerProfile
-from .serializers import OpportunitySerializer,ApplicationSerializer,SkillSerializer,VolunteerProfileSerializer
+from .models import Opportunity,Application,VolunteerProfile
+from .serializers import OpportunitySerializer,ApplicationSerializer,VolunteerProfileSerializer
 # Create your views here.
 
 
@@ -33,14 +33,13 @@ class Home(APIView):
 
 
 class OpportunityList(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def get(self, request):
+   permission_classes = [IsAuthenticatedOrReadOnly]
+   def get(self, request):
         queryset = Opportunity.objects.all()
         serializer = OpportunitySerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
+   def post(self, request):
 
         if not request.user.is_staff: 
             return Response({"error": "Only admins can create opportunities."}, status=status.HTTP_403_FORBIDDEN)
@@ -61,7 +60,6 @@ class OpportunityList(APIView):
 class OpportunityDetail(APIView):
 
     permission_classes = [IsAuthenticatedOrReadOnly]
-
     def get(self, request, opportunity_id):
         try:
             queryset = get_object_or_404(Opportunity, id=opportunity_id)
