@@ -32,12 +32,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
 
 class OpportunitySerializer(serializers.ModelSerializer):
-    skills = SkillSerializer(many=True, read_only=True)
     applications = ApplicationSerializer(many=True, read_only=True) 
 
     class Meta:
         model = Opportunity
-        fields = ['id', 'title', 'description', 'date', 'location', 'skills', 'applications']
+        fields = ['id', 'title', 'description', 'date', 'location','skills_list', 'applications', 'specialization']
 
 class ApplicationSerializer(serializers.ModelSerializer):
     profile = VolunteerProfileSerializer(read_only=True) 

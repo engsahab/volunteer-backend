@@ -66,14 +66,8 @@ class OpportunityDetail(APIView):
         try:
             queryset = get_object_or_404(Opportunity, id=opportunity_id)
             serializer = OpportunitySerializer(queryset)
-            skills_opportunity_has = queryset.skills.all() 
-            skills_opportunity_does_not_have = Skill.objects.exclude(
-                id__in=skills_opportunity_has.values_list('id')
-            )
-            data = serializer.data
-            data['skills_opportunity_has'] = SkillSerializer(skills_opportunity_has, many=True).data
-            data['skills_opportunity_does_not_have'] = SkillSerializer(skills_opportunity_does_not_have, many=True).data
-            return Response(data)
+
+            return Response(serializer.data)
         
         except Exception as error:
             return Response(
@@ -127,6 +121,12 @@ class OpportunityApplicationList(APIView):
             try:
 
                 profile = request.user.profile 
+                if Application.objects.filter(profile=profile, opportunity_id=opportunity_id).exists():
+
+                    return Response(
+                        {"error": "You have already applied for this opportunity."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 
                 serializer = ApplicationSerializer(data=request.data)
                 
@@ -318,4 +318,24 @@ class GetUserProfileView(APIView):
         except Exception as error:
              return Response({"error": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+   
+class AdminProfileDetail(APIView):
     
+    permission_classes = [IsAdminUser] 
+
+    def get(self, request, profile_id):
+
+        try:
+
+            profile = get_object_or_404(VolunteerProfile, id=profile_id)
+            
+
+            serializer = VolunteerProfileSerializer(profile)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as error:
+             return Response(
+                {"error": "Profile not found or access denied."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )

@@ -18,6 +18,7 @@ urlpatterns = [
     path('admin/applications/', views.AdminApplicationList.as_view(), name='admin-app-list'),
     path('opportunities/<int:opportunity_id>/desociate-skill/<int:skill_id>/', views.DesociateSkillFromOpp.as_view(), name='desociate-skill'),
     path('profile/', views.GetUserProfileView.as_view(), name='get_profile'),
+    path('admin/profile/<int:profile_id>/', views.AdminProfileDetail.as_view(), name='admin-profile-detail'),
     path('signup/', views.SignupUserView.as_view(), name='signup'),
     path('login/', TokenObtainPairView.as_view(), name='login'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

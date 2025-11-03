@@ -4,28 +4,25 @@ User = get_user_model()
 
 # Create your models here.
 
-
-
-class Skill(models.Model):
-    name = models.CharField(max_length=100)
-
-
 class VolunteerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    skills = models.ManyToManyField(Skill, blank=True) 
+    skills = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
     specialization = models.CharField(max_length=200, blank=True, null=True)
     
     def __str__(self):
         return self.user.username
 
+class Skill(models.Model):
+    name = models.CharField(max_length=100)
 
 class Opportunity(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     date = models.DateField()
     location = models.CharField(max_length=200)
-    skills = models.ManyToManyField(Skill, blank=True)
+    skills_list = models.TextField(blank=True, null=True)
+    specialization = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self):
         return self.title
