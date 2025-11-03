@@ -197,64 +197,7 @@ class AdminApplicationList(APIView):
         serializer = ApplicationSerializer(applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class SkillList(APIView):
-       permission_classes = [IsAdminUser]
-       
-       def get(self, request):
-            skills = Skill.objects.all()
-            serializer = SkillSerializer(skills, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-       def post(self, request):
-        serializer = SkillSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class SkillDetail(APIView):
-    permission_classes = [IsAdminUser] 
-
-    def get(self, request, skill_id):
-        skill = get_object_or_404(Skill, id=skill_id)
-        serializer = SkillSerializer(skill)
-        return Response(serializer.data)
-
-    def put(self, request, skill_id):
-        skill = get_object_or_404(Skill, id=skill_id)
-        serializer = SkillSerializer(skill, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, skill_id):
-        skill = get_object_or_404(Skill, id=skill_id)
-        skill.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-class AssociateSkillToOpp(APIView):
-       permission_classes = [IsAdminUser]
-       
-       def patch(self, request, opportunity_id, skill_id):
-        opportunity = get_object_or_404(Opportunity, id=opportunity_id)
-        skill = get_object_or_404(Skill, id=skill_id)
-        opportunity.skills.add(skill)
-        return Response({"message": f"Skill {skill.name} added to {opportunity.title}"}, status=status.HTTP_200_OK)
-
-
-class DesociateSkillFromOpp(APIView):
-    permission_classes = [IsAdminUser]
-
-    def post(self, request, opportunity_id, skill_id): 
-        opportunity = get_object_or_404(Opportunity, id=opportunity_id)
-        skill = get_object_or_404(Skill, id=skill_id)
-        opportunity.skills.remove(skill)
-        return Response({"message": f"Skill {skill.name} removed from {opportunity.title}"}, status=status.HTTP_200_OK)
-
-
- 
+    
 class SignupUserView(APIView):
     permission_classes = [AllowAny] 
 
