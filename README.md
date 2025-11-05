@@ -18,8 +18,7 @@ This repository contains the **Backend API** only. It is built using Python, Dja
 ---
 ## 3. Project Links
 
-* **Frontend Repository:** [(http://localhost:5173/opportunities)]
-
+* **Frontend Repository:** https://github.com/engsahab/Volunteer-frontend
 ---
 ## 4. (Planning)
 The project was planned by first defining the models and their relationships (ERD), and then specifying the routes (Routing Table) needed for the frontend.
